@@ -27,7 +27,7 @@ main{max-width:1035px;margin:84px auto 0}.offer{margin:0 auto 20px;border:1px so
 .profile-subtitle{max-width:448px;margin:12px auto 0;color:#737373;font-size:16px;line-height:1.5}
 .profile-card{width:min(512px,100%);margin:34px 0 0;padding:32px;border:1px solid rgba(231,229,228,.85);border-radius:16px;background:#fff;box-shadow:0 8px 30px rgba(16,69,71,.06)}
 .profile-name-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.profile-field{display:flex;flex-direction:column;gap:6px;margin:0 0 20px;color:#373737;font-size:14px;font-weight:500;line-height:1.25}
+.profile-field{display:flex;flex-direction:column;gap:6px;margin:0 0 22px;color:#373737;font-size:14px;font-weight:500;line-height:1.25}
 .profile-name-grid+.profile-field{margin-top:0}
 .profile-field>span{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .profile-field>span small{color:#a3a3a3;font-size:12px;font-weight:400}
@@ -35,7 +35,7 @@ main{max-width:1035px;margin:84px auto 0}.offer{margin:0 auto 20px;border:1px so
 .profile-field input::placeholder{color:#a8a29e;opacity:1}
 .profile-field select{padding-right:30px}
 .profile-referral{margin-bottom:0}
-.profile-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:27px}
+.profile-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:32px}
 .profile-skip,.profile-back{height:36px;padding:0;border:0;background:transparent;color:#a8a29e;font-size:14px;font-weight:500}
 .profile-actions-right{display:flex;align-items:center;gap:18px}
 .profile-back{display:inline-flex;align-items:center;gap:7px;color:#737373}

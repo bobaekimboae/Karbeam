@@ -68,7 +68,7 @@ function ProfileSetup({ initialProfile, onContinue, onSkip, onBack }) {
       <div className="profile-intro">
         <p className="profile-kicker">1단계 · 프로필 설정</p>
         <h1>프로필을 알려주세요</h1>
-        <p className="profile-subtitle">숏폼에 판매자 정보를 표시할 수 있어요. 이 정보는 언제든 수정할 수 있습니다.</p>
+        <p className="profile-subtitle">숏폼에 사용할 정보예요. 언제든 수정할 수 있어요.</p>
       </div>
       <form className="profile-card" onSubmit={submitProfile}>
         <div className="profile-name-grid">
