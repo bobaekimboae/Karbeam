@@ -1,28 +1,21 @@
-# Karbeam visual and function check
+# StudioOS by iamjapinder — 배포 검증
 
-**Result: passed with documented scope limits.** Checked against the live `https://iamjapinder.com/create?mode=video` source. No source video was generated and no files were uploaded to the source service.
+배포 주소: https://bobaekimboae.github.io/studioos-by-iamjapinder/
+저장소: https://github.com/bobaekimboae/studioos-by-iamjapinder
+참고 화면: https://iamjapinder.com/create
 
-## Visual comparison
+## 확인한 동작
 
-| Area | Source | Karbeam | Result |
-|---|---|---|---|
-| Typography | Clash Grotesk display face with Poppins UI | Source font files bundled locally; Korean glyphs fall back to system Korean sans | Match in Latin face and hierarchy; Korean remains legible |
-| Spacing and layout | Dark editor, pill navigation, promo badge, centered heading, vertical mode rail, photo/description area, setting chips, green CTA | Same major component order and compact editor structure, adapted to Korean wording and Karbeam identity | Close match; vehicle name and price fields add some editor height |
-| Colors | Near-black background, charcoal panels, muted text, green accent | Same dark palette and green actions | Match |
-| Images and assets | Source preview photos, no image at initial upload state | Local image preview from selected photos; no remote car artwork in the application | Functional replacement |
-| Copy | English labels and instructions | Korean labels and instructions | Translated |
+- 배포된 페이지 제목과 한국어 UI를 확인했습니다.
+- 차량 사진 2장을 업로드했습니다. 미리보기에서 두 사진이 표시되고, 브라우저 안의 로컬 객체 URL로 처리됐습니다.
+- 차량명·가격·설명과 9:16 비율, 2개 버전을 설정해 PNG 사진 게시물을 생성했습니다. 두 번째 버전 이미지가 608×1080으로 로드됐습니다.
+- PNG 다운로드 이벤트를 받아 `테스트-차량-세단-post-2.png` 파일을 확인했습니다. 674,271바이트이며 PNG 시그니처가 정상입니다.
+- WAV 테스트 파일을 선택해 영상에 포함하고 10초·720p·9:16 WebM을 생성했습니다. 미리보기 비디오는 405×720, `readyState: 4`였고 재생 중 시간이 증가했습니다.
+- 영상 다운로드 이벤트를 받아 `테스트-차량-세단-shortform.webm` 파일을 확인했습니다. 2,417,168바이트이며 WebM/EBML 시그니처가 정상입니다.
+- 미리보기 모드를 바꿀 때 이전 결과의 다운로드 버튼이 함께 남는 문제를 수정했습니다.
 
-The source desktop view was inspected at 1265×715. The source mobile reference screenshot is `qa/screenshots/source-mobile-390x844.png`. Karbeam desktop capture is `qa/screenshots/deployed-video-maker.png`; the generated video preview is `qa/screenshots/deployed-video-preview.png`; the clean mobile capture is `qa/screenshots/deployed-mobile.png`. The browser's requested 390×844 override reported a 433×937 CSS viewport, with no horizontal overflow.
+## 기능 범위
 
-## Functional verification
+사진 게시물은 선택한 차량 사진과 입력 문구를 조합해 브라우저 Canvas에서 실제 PNG로 렌더링합니다. 영상은 브라우저 Canvas/MediaRecorder로 사진 이동·전환, 문구, 선택한 사용자 음성을 WebM으로 렌더링합니다. 사진과 오디오 파일을 서버로 업로드하지 않습니다.
 
-- Uploaded two real car photos from the source site's public sample assets to the deployed Karbeam page only. The browser decoded them at 1920×1440 and 1920×2560; the application code uses object URLs and makes no photo-upload request.
-- Entered vehicle name, price, and caption; rendered 10 seconds at 720p, 9:16 from two photos.
-- Generated video appeared in the preview player and reported `readyState: 4`; playback advanced to 1.1 seconds.
-- Downloaded `Porsche-911-shortform.webm`; file size was 2,252,696 bytes and its EBML/WebM signature was `1a45dfa3`.
-- GitHub Actions build and Pages deploy both succeeded for commit `c89a15a`.
-
-## Scope limits
-
-Karbeam renders a real browser-encoded slideshow with pan/zoom, transitions between photos, and optional vehicle text. It does not connect to the source service's generative AI engine, account or credit system, or music/voice services. Output is WebM in browsers with MediaRecorder support.
-
+원본 서비스의 생성형 AI 비디오, 음성 합성, 음악 생성 엔진에는 연결되어 있지 않습니다. 원본 엔진을 호출할 공식 개발자 API 문서와 서버 자격 정보가 제공되지 않아 사설 API를 추측 호출하지 않았습니다. 사용자가 선택한 음성·음악 파일을 영상에 믹싱하는 기능은 연결되어 있습니다. 생성형 AI 엔진 연결에는 공식 API 문서와 서버에서 보관할 자격 정보, 호출 가능한 백엔드가 필요합니다.
