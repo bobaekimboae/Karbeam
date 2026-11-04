@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/studioos-by-iamjapinder/",
+  base: "/Karbeam/",
   build: {
     outDir: "dist/client",
   },
@@ -18,5 +18,4 @@ export default defineConfig({
   },
   plugins: [react()],
 });
-
 

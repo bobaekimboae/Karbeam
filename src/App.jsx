@@ -17,7 +17,81 @@ function drawFit(ctx, img, x, y, w, h, zoom = 1) {
   ctx.drawImage(img, x + (w - sw) / 2, y + (h - sh) / 2, sw, sh);
 }
 
+const profileStorageKey = "karbeam-profile-v1";
+const roleOptions = [
+  ["sales_agent", "영업 담당자"],
+  ["sales_manager", "영업 관리자"],
+  ["dealer_principal", "딜러 대표 / 소유주"],
+  ["marketing", "마케팅 담당자"],
+  ["other", "기타"],
+];
+const referralOptions = [
+  ["google", "Google 검색"],
+  ["ai", "ChatGPT / Gemini / Claude"],
+  ["social", "Instagram / TikTok / LinkedIn"],
+  ["friend", "친구 또는 동료"],
+  ["ad", "광고"],
+  ["event", "행사 또는 컨퍼런스"],
+  ["other", "기타"],
+];
+
+function readSavedProfile() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(profileStorageKey) || "null");
+    return saved && typeof saved === "object" ? saved : null;
+  } catch { return null; }
+}
+
+function ProfileSetup({ initialProfile, onContinue, onSkip, onBack }) {
+  const [firstName, setFirstName] = useState(initialProfile?.firstName || "");
+  const [lastName, setLastName] = useState(initialProfile?.lastName || "");
+  const [dealership, setDealership] = useState(initialProfile?.dealership || "");
+  const [role, setRole] = useState(initialProfile?.role || "");
+  const [referral, setReferral] = useState(initialProfile?.referral || "");
+  const base = import.meta.env.BASE_URL;
+
+  function submitProfile(event) {
+    event.preventDefault();
+    onContinue({ firstName: firstName.trim(), lastName: lastName.trim(), dealership: dealership.trim(), role, referral });
+  }
+
+  return <div className="profile-onboarding" lang="ko">
+    <header className="profile-header">
+      <div className="profile-header-row">
+        <div className="profile-brand"><img src={`${base}karbeam-mark.svg`} alt=""/><span>Karbeam</span></div>
+        <span className="profile-step-count">2단계 / 4단계</span>
+      </div>
+      <div className="profile-progress" role="progressbar" aria-label="가입 진행률" aria-valuemin="0" aria-valuemax="4" aria-valuenow="2"><span/></div>
+    </header>
+
+    <main className="profile-main">
+      <div className="profile-intro">
+        <p className="profile-kicker">1단계 · 프로필 설정</p>
+        <h1>프로필을 알려주세요</h1>
+        <p className="profile-subtitle">숏폼에 판매자 정보를 표시할 수 있어요. 이 정보는 언제든 수정할 수 있습니다.</p>
+      </div>
+      <form className="profile-card" onSubmit={submitProfile}>
+        <div className="profile-name-grid">
+          <label className="profile-field"><span>이름</span><input autoComplete="given-name" name="firstName" value={firstName} onChange={(e)=>setFirstName(e.target.value)} placeholder="예: 민준" required/></label>
+          <label className="profile-field"><span>성</span><input autoComplete="family-name" name="lastName" value={lastName} onChange={(e)=>setLastName(e.target.value)} placeholder="예: 김" required/></label>
+        </div>
+        <label className="profile-field"><span>매매상사 이름</span><input autoComplete="organization" name="dealership" value={dealership} onChange={(e)=>setDealership(e.target.value)} placeholder="예: 서울 오토모빌"/></label>
+        <label className="profile-field"><span>직무</span><select name="role" value={role} onChange={(e)=>setRole(e.target.value)}><option value="">직무를 선택하세요</option>{roleOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+        <label className="profile-field profile-referral"><span>Karbeam을 어떻게 알게 되셨나요?<small>선택 사항</small></span><select name="referral" value={referral} onChange={(e)=>setReferral(e.target.value)}><option value="">선택하세요</option>{referralOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+        <div className="profile-actions">
+          <button className="profile-skip" type="button" onClick={onSkip}>나중에 하기</button>
+          <div className="profile-actions-right"><button className="profile-back" type="button" onClick={onBack}><Icon name="back"/> 이전</button><button className="profile-continue" type="submit">계속</button></div>
+        </div>
+      </form>
+    </main>
+
+    <footer className="profile-footer">© 2026 Karbeam. 모든 권리 보유.</footer>
+  </div>;
+}
+
 export function App() {
+  const [savedProfile, setSavedProfile] = useState(() => readSavedProfile());
+  const [showProfile, setShowProfile] = useState(() => !readSavedProfile()?.finished);
   const [mode, setMode] = useState("video");
   const [photos, setPhotos] = useState([]);
   const [description, setDescription] = useState("");
@@ -50,6 +124,19 @@ export function App() {
 
   useEffect(() => { if (!toast) return; const id = setTimeout(() => setToast(""), 3000); return () => clearTimeout(id); }, [toast]);
 
+  function saveProfile(profile) {
+    const next = { ...profile, finished: true };
+    try { localStorage.setItem(profileStorageKey, JSON.stringify(next)); } catch {}
+    setSavedProfile(next);
+    setShowProfile(false);
+  }
+  function skipProfile() {
+    const next = { ...(savedProfile || {}), finished: true, skipped: true };
+    try { localStorage.setItem(profileStorageKey, JSON.stringify(next)); } catch {}
+    setSavedProfile(next);
+    setShowProfile(false);
+  }
+
   function addFiles(fileList) {
     const files = [...fileList].filter((f) => f.type.startsWith("image/")).slice(0, 12 - photos.length);
     if (!files.length) { setToast("이미지 파일을 선택해 주세요."); return; }
@@ -62,7 +149,7 @@ export function App() {
   function pickFiles() { inputRef.current?.click(); }
   function downloadVideo() {
     if (!output) return;
-    const a = document.createElement("a"); a.href = output; a.download = outputName || "studioos-shortform.webm"; a.click();
+    const a = document.createElement("a"); a.href = output; a.download = outputName || "karbeam-shortform.webm"; a.click();
   }
 
   function downloadPhoto() {
@@ -118,10 +205,10 @@ export function App() {
         if (vehicle) ctx.fillText(vehicle.slice(0, 22), pad, canvas.height * .86);
         if (price) { ctx.font = `600 ${Math.round(canvas.width * .045)}px Arial,sans-serif`; ctx.fillText(price.slice(0, 24), pad, canvas.height * .92); }
         ctx.fillStyle = "#ffffffcf"; ctx.font = `400 ${Math.round(canvas.width * .023)}px Arial,sans-serif`;
-        ctx.fillText("STUDIOOS  ·  VERIFIED VEHICLE DETAILS", pad, canvas.height * .965);
+        ctx.fillText("KARBEAM  ·  VERIFIED VEHICLE DETAILS", pad, canvas.height * .965);
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
         if (!blob) throw new Error("사진 내보내기에 실패했습니다.");
-        const fileStem = (vehicle || "studioos").trim().replace(/[^\p{L}\p{N}-]+/gu, "-");
+        const fileStem = (vehicle || "karbeam").trim().replace(/[^\p{L}\p{N}-]+/gu, "-");
         outputs.push({ url: URL.createObjectURL(blob), name: `${fileStem}-post-${index + 1}.png` });
         setProgress(Math.round((index + 1) / count * 100));
       }
@@ -187,7 +274,7 @@ export function App() {
       const blob = new Blob(chunks, { type: supported });
       const url = URL.createObjectURL(blob);
       setOutput((old) => { if (old) URL.revokeObjectURL(old); return url; });
-      setOutputName(`${(vehicle || "studioos").trim().replace(/[^\p{L}\p{N}-]+/gu, "-")}-shortform.webm`);
+      setOutputName(`${(vehicle || "karbeam").trim().replace(/[^\p{L}\p{N}-]+/gu, "-")}-shortform.webm`);
       setBusy(false); setProgress(100); stream.getTracks().forEach((track) => track.stop());
       audioElement?.pause(); audioContext?.close().catch(() => {});
       setToast("영상이 완성됐어요. 미리보기 후 다운로드할 수 있습니다.");
@@ -240,10 +327,12 @@ export function App() {
     { key: "quality", label: `화질: ${quality}`, options: ["720p", "1080p"], pick: setQuality },
   ], [style, seconds, ratio, quality]);
 
+  if (showProfile) return <ProfileSetup initialProfile={savedProfile} onContinue={saveProfile} onSkip={skipProfile} onBack={()=>setShowProfile(false)}/>;
+
   return <div className="app-shell" onClick={(e) => { if (!e.target.closest(".setting-wrap") && !e.target.closest(".ideas-wrap")) setMenu(""); }}>
     <header className="topbar">
       <nav className="nav-pill" aria-label="주 메뉴"><button className="back" aria-label="뒤로"><Icon name="back"/></button><a className="nav-active" href="#create">만들기</a><a href="#projects" onClick={(e)=>{e.preventDefault();setToast("이 브라우저에서 만든 최근 영상만 이 화면에 표시됩니다.");}}>프로젝트</a><a href="#credits" onClick={(e)=>{e.preventDefault();setToast("사진 영상은 이 기기에서 무료로 렌더링됩니다.");}}>크레딧</a></nav>
-      <div className="nav-right"><button className="upgrade" onClick={()=>setToast("StudioOS는 로컬 제작을 지원합니다. 생성형 AI 엔진 연결에는 공식 API 정보가 필요합니다.")}><span>♛</span> 요금제</button><button className="credit-pill"><span className="coin">◉</span> 무료 제작</button><button className="avatar" aria-label="계정">S</button></div>
+      <div className="nav-right"><button className="upgrade" onClick={()=>setToast("Karbeam은 로컬 제작을 지원합니다. 생성형 AI 엔진 연결에는 공식 API 정보가 필요합니다.")}><span>♛</span> 요금제</button><button className="credit-pill"><span className="coin">◉</span> 무료 제작</button><button className="avatar" aria-label="프로필 설정" onClick={()=>setShowProfile(true)}>{savedProfile?.firstName?.slice(0,1) || "K"}</button></div>
     </header>
     <main id="create">
       <div className="offer"><span>무료 베타</span><span>사진으로 만드는 자동차 숏폼</span><span>→</span></div>
@@ -270,10 +359,9 @@ export function App() {
       <button className="how-button" onClick={()=>setShowHow(!showHow)}>사용 방법 <Icon name="chevron"/></button>
       {showHow && <div className="how-panel"><article><span>01</span><div><b>차량 사진 추가</b><p>차량의 외관·실내 사진을 여러 장 선택하세요.</p></div></article><article><span>02</span><div><b>영상 분위기 설정</b><p>스타일, 길이, 화면 비율과 차량 정보를 선택하세요.</p></div></article><article><span>03</span><div><b>미리보기와 저장</b><p>브라우저에서 영상을 만들고 재생을 확인한 뒤 WebM으로 저장하세요.</p></div></article></div>}
     </main>
-    <footer className="site-footer"><div><strong>StudioOS by iamjapinder</strong><span>차량 사진으로 만드는 숏폼</span></div><small>사진과 오디오는 브라우저 안에서 처리되며 서버에 업로드되지 않습니다.</small></footer>
+    <footer className="site-footer"><div><strong>Karbeam</strong><span>차량 사진으로 만드는 숏폼</span></div><small>사진과 오디오는 브라우저 안에서 처리되며 서버에 업로드되지 않습니다.</small></footer>
     <input ref={inputRef} className="visually-hidden" type="file" accept="image/*" multiple onChange={(e)=>{addFiles(e.target.files);e.target.value=""}}/>
     <canvas ref={canvasRef} className="render-canvas" aria-hidden="true"/>
     {toast && <div className="toast" role="status">{toast}<button onClick={()=>setToast("")} aria-label="닫기"><Icon name="close"/></button></div>}
   </div>;
 }
-
