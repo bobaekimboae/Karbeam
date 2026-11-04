@@ -10,6 +10,7 @@ function Icon({ name }) {
 }
 
 function drawFit(ctx, img, x, y, w, h, zoom = 1) {
+  if (!img || !img.width || !img.height) return;
   const scale = Math.max(w / img.width, h / img.height) * zoom;
   const sw = img.width * scale, sh = img.height * scale;
   ctx.drawImage(img, x + (w - sw) / 2, y + (h - sh) / 2, sw, sh);
@@ -68,7 +69,20 @@ export function App() {
     canvas.width = Math.round(width * selectedRatio.w / Math.max(selectedRatio.w, selectedRatio.h));
     canvas.height = Math.round(width * selectedRatio.h / Math.max(selectedRatio.w, selectedRatio.h));
     const ctx = canvas.getContext("2d", { alpha: false });
-    const loaded = await Promise.all(photos.map((p) => new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = p.url; })));
+    let loaded;
+    try {
+      loaded = await Promise.all(photos.map((p) => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => image.naturalWidth > 0 && image.naturalHeight > 0 ? resolve(image) : reject(new Error("이미지 크기를 확인할 수 없습니다."));
+        image.onerror = () => reject(new Error("사진을 읽을 수 없습니다."));
+        image.src = p.url;
+      })));
+    } catch {
+      setBusy(false);
+      setToast("사진을 읽지 못했어요. JPG, PNG, WebP 사진을 다시 선택해 주세요.");
+      return;
+    }
+    if (!loaded.length) { setBusy(false); setToast("영상에 넣을 사진을 추가해 주세요."); return; }
     const stream = canvas.captureStream(30);
     const chunks = [];
     const recorder = new MediaRecorder(stream, { mimeType: supported, videoBitsPerSecond: quality === "1080p" ? 5_000_000 : 2_500_000 });
@@ -87,9 +101,10 @@ export function App() {
     const duration = seconds * 1000;
     const frame = (now) => {
       const t = Math.min(now - started, duration);
-      const scene = Math.min(loaded.length - 1, Math.floor(t / duration * loaded.length));
+      const scene = Math.max(0, Math.min(loaded.length - 1, Math.floor(t / duration * loaded.length)));
       const local = (t / duration * loaded.length) % 1;
-      const img = loaded[scene];
+      const img = loaded[scene] || loaded[0];
+      if (!img) { recorder.stop(); setBusy(false); setToast("사진을 영상에 불러오지 못했어요. 다시 시도해 주세요."); return; }
       const zoom = 1.02 + local * 0.08;
       ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawFit(ctx, img, 0, 0, canvas.width, canvas.height, zoom);
